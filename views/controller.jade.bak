@@ -1,0 +1,199 @@
+doctype 5
+
+html
+  head
+    title Robot - Development Exercise
+    script(type='text/javascript', src='/socket.io/socket.io.js')
+
+    style(type='text/css')
+      body {
+        padding: 30px 50px;
+      }
+
+      #t {
+        display: block;
+        margin-bottom: 15px;
+        outline: none;
+        width: 750px;
+        height: 100px;
+        background-color:"#000000"
+      }
+
+      #creatRobot {
+        width: 200px;
+      }
+
+      #controlRobot {
+        width: 300px;
+      }
+
+  body
+    h1 Robot Development Exercise
+    h1 Author : Sachin Mohite
+    br
+    br
+    h2 Controller View
+
+    span=' 1. Create Robot Control Session'
+    br
+    input#creatRobot(placeholder='Mention Robot Type Here')
+    <input id=btnCreatRobot type=button value="Create Controls">
+
+    br
+    br
+    span=' 2. Enter Robot movements here.'
+    br
+    input#controlRobot(placeholder='Control robot by Entering values here')
+    br
+    br
+    span=' 3. This console renders the changing Positions of Robot'
+    //textarea#t(readonly='1')
+    <input type="text" id="t" size="10"  style="align:center; width: 300px;height: 70px;color:#ffffff; background-color: #000000">
+    br
+ 
+    h2 Instructions:
+    1. First Mention the Type of the Robot (GroundVehichle/AirBorneVehichle) to Create Robot Control Session.
+    br
+    2. Robot accepts F-Forward, R-Right, L-Left, U-Up, D-Down instructions only.
+    br
+    3. Only AirBorne Vehichles will be able to move on Z-Axis (i.e. Up and Down).
+    br
+    4. Directions values are numeric from the programming perspective. <b>1=North, 2=East, 3=South, 4=West</b>.
+    br
+
+
+    h2 Other Details:
+    1. I have also implemented getPosition() and getDirection() methods which are not demonstrated here.
+    br
+    2. I have hosted this demonstration on the <b>Azure Instance</b>.
+    br
+    3. Client Side is developed in JADE. I was just trying it for my own sake, as UI is less important here.
+    br
+    4. This UI is not tested on different Browsers. I tested it on Crome. There is possibility of misbehavior on others.
+    br
+    5. Controllers can connect on http://nodejsserver.cloudapp.net:3000/?controller=true and Robots can connect on http://nodejsserver.cloudapp.net:3000/?controller=false.
+
+
+
+
+    script(type='text/javascript')
+      var socket = io.connect();
+
+      //On Socket : session
+      socket.on('session', function (session) {
+
+            if(typeof session.robot !== "undefined" && session.robot != null)
+            {
+                  var inputCreatRobot = document.getElementById('creatRobot');
+                  var btnCreatRobot = document.getElementById('btnCreatRobot');
+
+                  inputCreatRobot.value = session.robot.type;
+                  inputCreatRobot.disabled="disabled";
+
+                  btnCreatRobot.value = "Delete Controls";
+
+                  document.getElementById('t').value = 'Position:('+session.robot.x+','+session.robot.y+','+session.robot.z+'); Direction:'+session.robot.dir;
+            }
+      });
+
+
+      //On Socket : creatRobot
+      socket.on('creatRobot', function (objRobot) {
+
+            var inputCreatRobot = document.getElementById('creatRobot');
+            var btnCreatRobot = document.getElementById('btnCreatRobot');
+
+            inputCreatRobot.value = objRobot.type;
+            inputCreatRobot.disabled="disabled";
+
+            btnCreatRobot.value = "Delete Controls";
+
+            document.getElementById('t').value = 'Position:('+objRobot.x+','+objRobot.y+','+objRobot.z+'); Direction:'+objRobot.dir;
+
+            //document.getElementById('t').value = JSON.stringify(session);
+      });//socket.on('creatRobot', function (value) {
+
+      //On Socket : deleteRobot
+      socket.on('deleteRobot', function (objRobot) {
+
+            var inputCreatRobot = document.getElementById('creatRobot');
+            var btnCreatRobot = document.getElementById('btnCreatRobot');
+
+            inputCreatRobot.value = "";
+            inputCreatRobot.placeholder = "Mention Robot Type Here";
+            inputCreatRobot.disabled=false;
+
+            btnCreatRobot.value = "Create Controls";
+
+            document.getElementById('t').value = "Please create Robot controlls..."
+
+            //document.getElementById('t').value = JSON.stringify(session);
+      });//socket.on('creatRobot', function (value) {	  
+
+      //On Socket : updateRobot
+      socket.on('updateRobot', function (objRobot) {
+
+            document.getElementById('t').value = 'Position:('+objRobot.x+','+objRobot.y+','+objRobot.z+'); Direction:'+objRobot.dir;
+      });//socket.on('creatRobot', function (value) {
+
+      //On Click event of Robot object creation button      
+      document.getElementById('btnCreatRobot').onclick = function (evt) {
+      
+            var inputCreatRobot = document.getElementById('creatRobot');
+
+            if(inputCreatRobot.value==="GroundVehicle" || inputCreatRobot.value==="AirBorneVehicle")
+            {
+                   event.preventDefault();       
+                   socket.emit('creatRobot', inputCreatRobot.value); 	     
+
+            }//if(inputCreatRobot.value==="GroundVehicle" || inputCreatRobot.value==="AirBorneVehicle")
+            else
+            {
+                   alert("Only GroundVehicle and AirBorneVehicle Accepted.....");
+            }//else
+  
+      };//.addEventListener('keydown', function (evt) {
+      
+      //On KeyDown event of Robot control instructions      
+      document.getElementById('controlRobot').addEventListener('keydown', function (evt) {
+
+            var event = (typeof evt !== "undefined")? evt : event;
+            var keyunicode=event.charCode || event.keyCode;
+
+            var inputCreatRobot = document.getElementById('creatRobot');
+                              
+            switch(keyunicode)
+            {
+                  //If Up or Down key is pressed
+                  case 100:
+                  case 68:
+                  case 117:
+                  case 85:
+                        if(inputCreatRobot.value=="GroundVehicle")
+                        {
+                              alert("Up and Down movements are allowed only for AirBorneVehicle");
+                        }//if(inputCreatRobot.value=="GroundVehicle")
+                        else
+                        {
+
+                              socket.emit('updateRobot', String.fromCharCode(keyunicode));
+                        }//else
+                  break;
+
+                  //If Enter key is pressed send the string input to the server
+                  case 13:
+                        if(this.value!=="")
+                        {
+                               socket.emit('updateRobot', this.value);	         
+                        }//if(this.value!=="")
+                  break;
+
+                  //If Up or Down key is pressed
+                  default:
+                        {
+                              socket.emit('updateRobot', String.fromCharCode(keyunicode));
+                        }
+                        break;
+            }//switch(keyunicode)
+
+      });//document.getElementById('controlRobot').addEventListener('keydown', function (evt) {
